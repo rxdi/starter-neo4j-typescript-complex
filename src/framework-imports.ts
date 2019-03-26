@@ -35,8 +35,8 @@ import { Module, CoreModule } from "@gapi/core";
                 openBrowser: true,
                 watcherPort: 8967,
                 writeEffects: true,
-                graphiql: true,
-                graphiQlPlayground: false,
+                graphiql: false,
+                graphiQlPlayground: true,
                 graphiqlOptions: {
                     endpointURL: '/graphql',
                     passHeader: `'Authorization':'${process.env.GRAPHIQL_TOKEN}'`,
