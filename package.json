@@ -4,15 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "gapi start --local --lint --parcel",
+    "start": "gapi start --local --lint",
     "test": "gapi test --local",
     "lint": "echo"
   },
   "author": "Kristiyan Tachev (Stradivario)",
   "license": "MIT",
   "dependencies": {
-    "@gapi/core": "1.4.82",
+    "@gapi/core": "1.4.85",
     "@gapi/voyager": "^1.4.82",
+    "@rxdi/neo4j": "^0.0.396",
     "neo4j-driver": "^1.7.2",
     "neo4j-graphql-js": "^2.4.0"
   },

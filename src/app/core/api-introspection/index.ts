@@ -18,36 +18,35 @@
     column: number;
   }
 
-  /**
-    description: Query type for all get requests which will not change persistent data
-  */
+  
   export interface IQuery {
     __typename?: "Query";
-    UserContext: IUserContext | null;
     Attachment: Array<IAttachment> | null;
     Channel: Array<IChannel> | null;
     Message: Array<IMessage> | null;
     User: Array<IUser> | null;
+    UserContext: Array<IUserContext> | null;
 }
 
+export   
+  type IAttachmentOrderingEnum = 'source_asc' | 'source_desc' | 'name_asc' | 'name_desc' | 'downloadFileName_asc' | 'downloadFileName_desc' | 'mimeType_asc' | 'mimeType_desc' | 'thumbnail_asc' | 'thumbnail_desc' | '_id_asc' | '_id_desc';
+
   
-  export interface IUserContext {
-    __typename?: "UserContext";
-    user: IUser | null;
-    channels: Array<IChannel> | null;
-    blockedUsers: Array<string> | null;
+  export interface IAttachment {
+    __typename?: "Attachment";
+    source: string | null;
+    name: string | null;
+    downloadFileName: string | null;
+    mimeType: string | null;
+    thumbnail: string | null;
     _id: string | null;
 }
 
-  
-  export interface IUser {
-    __typename?: "User";
-    userName: string | null;
-    userId: string | null;
-    externalId: string | null;
-    activeChannel: string | null;
-    _id: string | null;
-}
+export   
+  type IChannelTypeEnum = 'PRIVATE' | 'PUBLIC' | 'GROUP';
+
+export   
+  type IChannelOrderingEnum = 'channelType_asc' | 'channelType_desc' | '_id_asc' | '_id_desc';
 
   
   export interface IChannel {
@@ -80,28 +79,8 @@
     _id: string | null;
 }
 
-  
-  export interface IAttachment {
-    __typename?: "Attachment";
-    source: string | null;
-    name: string | null;
-    downloadFileName: string | null;
-    mimeType: string | null;
-    thumbnail: string | null;
-    _id: string | null;
-}
-
 export   
   type IMessageEnumTypeEnum = 'CHAT_PRIVATE' | 'CHAT_PUBLIC' | 'USER_JOIN' | 'USER_LEAVE' | 'DEL_MESSAGE';
-
-export   
-  type IChannelTypeEnum = 'PRIVATE' | 'PUBLIC' | 'GROUP';
-
-export   
-  type IAttachmentOrderingEnum = 'source_asc' | 'source_desc' | 'name_asc' | 'name_desc' | 'downloadFileName_asc' | 'downloadFileName_desc' | 'mimeType_asc' | 'mimeType_desc' | 'thumbnail_asc' | 'thumbnail_desc' | '_id_asc' | '_id_desc';
-
-export   
-  type IChannelOrderingEnum = 'channelType_asc' | 'channelType_desc' | '_id_asc' | '_id_desc';
 
 export   
   type IMessageOrderingEnum = 'messageId_asc' | 'messageId_desc' | 'content_asc' | 'content_desc' | 'senderName_asc' | 'senderName_desc' | 'date_asc' | 'date_desc' | 'channelId_asc' | 'channelId_desc' | 'messageType_asc' | 'messageType_desc' | 'timestamp_asc' | 'timestamp_desc' | 'endOfLifeTimestamp_asc' | 'endOfLifeTimestamp_desc' | 'seen_asc' | 'seen_desc' | 'own_asc' | 'own_desc' | 'important_asc' | 'important_desc' | 'loading_asc' | 'loading_desc' | 'profileImage_asc' | 'profileImage_desc' | '_id_asc' | '_id_desc';
@@ -109,18 +88,38 @@ export
 export   
   type IUserOrderingEnum = 'userName_asc' | 'userName_desc' | 'userId_asc' | 'userId_desc' | 'externalId_asc' | 'externalId_desc' | 'activeChannel_asc' | 'activeChannel_desc' | '_id_asc' | '_id_desc';
 
-  /**
-    description: Mutation type for all requests which will change persistent data
-  */
+  
+  export interface IUser {
+    __typename?: "User";
+    userName: string | null;
+    userId: string | null;
+    externalId: string | null;
+    activeChannel: string | null;
+    _id: string | null;
+}
+
+export   
+  type IUserContextOrderingEnum = '_id_asc' | '_id_desc';
+
+  
+  export interface IUserContext {
+    __typename?: "UserContext";
+    user: IUser | null;
+    channels: Array<IChannel> | null;
+    blockedUsers: Array<string> | null;
+    _id: string | null;
+}
+
+  
   export interface IMutation {
     __typename?: "Mutation";
-    CreateMessage: IMessage | null;
     CreateAttachment: IAttachment | null;
     UpdateAttachment: IAttachment | null;
     DeleteAttachment: IAttachment | null;
     CreateChannel: IChannel | null;
     UpdateChannel: IChannel | null;
     DeleteChannel: IChannel | null;
+    CreateMessage: IMessage | null;
     UpdateMessage: IMessage | null;
     DeleteMessage: IMessage | null;
     CreateUser: IUser | null;
@@ -272,9 +271,6 @@ export
   export interface IUserInput {
     userName: string;
 }
-
-export   
-  type IUserContextOrderingEnum = '_id_asc' | '_id_desc';
 
 export   
   type IRelationDirectionsEnum = 'IN' | 'OUT';
