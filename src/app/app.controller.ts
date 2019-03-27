@@ -1,19 +1,22 @@
-import { Controller, Type, Mutation, GraphQLString, Query } from "@gapi/core";
-import { neo4jgraphql } from "neo4j-graphql-js";
-import { UserContext } from "./types/user/user-context.type";
+import { Controller, Type, Mutation, GraphQLString, Query, Interceptor, Subscription, Subscribe, PubSubService, withFilter } from "@gapi/core";
 import { Message } from "./types/message/message.type";
 import { GraphQLContext } from "./app.context";
-import { GraphQLList } from "graphql";
+import { GraphQLList, GraphQLNonNull, GraphQLInt } from "graphql";
+import { graphRequest } from "@rxdi/neo4j";
+import { IMessage } from "./core/api-introspection";
+import { LoggerInterceptor } from "./core/interceptors/logger.interceptor";
+// import { AdminOnly } from "./core/guards/admin-only.guard";
 
 @Controller()
 export class AppQueriesController {
-  @Type(UserContext)
-  @Query()
-  UserContext(root, params, ctx: GraphQLContext, resolveInfo) {
-    return neo4jgraphql(root, params, ctx, resolveInfo);
-  }
 
+  constructor(
+    private pubsub: PubSubService
+  ) {}
+
+  @Interceptor(LoggerInterceptor)
   @Type(Message)
+  // @Guard(AdminOnly)
   @Mutation({
     messageId: {
       type: GraphQLString
@@ -22,8 +25,10 @@ export class AppQueriesController {
       type: GraphQLString
     }
   })
-  CreateMessage(root, params, ctx: GraphQLContext, resolveInfo) {
-    return neo4jgraphql(root, params, ctx, resolveInfo);
+  async CreateMessage(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage> {
+    const response = await graphRequest<IMessage>(root, params, ctx, resolveInfo);
+    this.pubsub.publish('CREATE_MESSAGE', response);
+    return response;
   }
 
   @Type(new GraphQLList(Message))
@@ -35,8 +40,8 @@ export class AppQueriesController {
       type: GraphQLString
     }
   })
-  Messages(root, params, ctx: GraphQLContext, resolveInfo) {
-    return neo4jgraphql(root, params, ctx, resolveInfo);
+  Messages(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage[]> {
+    return graphRequest<IMessage[]>(root, params, ctx, resolveInfo);
   }
 
   @Type(Message)
@@ -48,7 +53,36 @@ export class AppQueriesController {
       type: GraphQLString
     }
   })
-  Message(root, params, ctx: GraphQLContext, resolveInfo) {
-    return neo4jgraphql(root, params, ctx, resolveInfo);
+  Message(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage> {
+    return graphRequest<IMessage>(root, params, ctx, resolveInfo);
   }
+
+
+  @Type(Message)
+  @Subscribe((self: AppQueriesController) => self.pubsub.asyncIterator('CREATE_MESSAGE'))
+  @Subscription()
+  subscribeToUserMessagesBasic(message: IMessage): IMessage {
+      return message;
+  }
+
+
+  @Type(Message)
+  @Subscribe(
+      withFilter(
+          (self: AppQueriesController) => self.pubsub.asyncIterator('CREATE_MESSAGE_WITH_FILTER'),
+          (payload, {id}, context: GraphQLContext) => {
+              console.log('Subscribed User: ', id, context);
+              return true;
+          }
+      )
+  )
+  @Subscription({
+      id: {
+          type: new GraphQLNonNull(GraphQLInt)
+      }
+  })
+  subscribeToUserMessagesWithFilter(message: IMessage): IMessage {
+      return message;
+  }
+
 }

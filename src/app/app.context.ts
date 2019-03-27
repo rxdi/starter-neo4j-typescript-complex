@@ -1,5 +1,5 @@
-import { v1 as neo4j } from "neo4j-driver";
+import { Driver } from "@rxdi/neo4j";
 
 export interface GraphQLContext {
-  driver: neo4j.Driver;
+  driver: Driver;
 }

@@ -3,7 +3,7 @@
 
 
   export interface IGraphQLResponseRoot {
-    data?: IQuery | IMutation;
+    data?: IQuery | IMutation | ISubscription;
     errors?: Array<IGraphQLResponseError>;
   }
 
@@ -21,43 +21,25 @@
   
   export interface IQuery {
     __typename?: "Query";
+    status: IStatusQueryType | null;
+    Messages: Array<IMessage> | null;
+    Message: IMessage | null;
     Attachment: Array<IAttachment> | null;
     Channel: Array<IChannel> | null;
-    Message: Array<IMessage> | null;
+    StatusQueryType: Array<IStatusQueryType> | null;
     User: Array<IUser> | null;
     UserContext: Array<IUserContext> | null;
 }
 
-export   
-  type IAttachmentOrderingEnum = 'source_asc' | 'source_desc' | 'name_asc' | 'name_desc' | 'downloadFileName_asc' | 'downloadFileName_desc' | 'mimeType_asc' | 'mimeType_desc' | 'thumbnail_asc' | 'thumbnail_desc' | '_id_asc' | '_id_desc';
-
   
-  export interface IAttachment {
-    __typename?: "Attachment";
-    source: string | null;
-    name: string | null;
-    downloadFileName: string | null;
-    mimeType: string | null;
-    thumbnail: string | null;
+  export interface IStatusQueryType {
+    __typename?: "StatusQueryType";
+    status: string | null;
     _id: string | null;
 }
 
 export   
-  type IChannelTypeEnum = 'PRIVATE' | 'PUBLIC' | 'GROUP';
-
-export   
-  type IChannelOrderingEnum = 'channelType_asc' | 'channelType_desc' | '_id_asc' | '_id_desc';
-
-  
-  export interface IChannel {
-    __typename?: "Channel";
-    channelId: Array<string> | null;
-    channelName: Array<string> | null;
-    subscribers: Array<string> | null;
-    messages: Array<IMessage> | null;
-    channelType: IChannelTypeEnum | null;
-    _id: string | null;
-}
+  type IMessageOrderingEnum = 'messageId_asc' | 'messageId_desc' | 'content_asc' | 'content_desc' | 'senderName_asc' | 'senderName_desc' | 'date_asc' | 'date_desc' | 'channelId_asc' | 'channelId_desc' | 'messageType_asc' | 'messageType_desc' | 'timestamp_asc' | 'timestamp_desc' | 'endOfLifeTimestamp_asc' | 'endOfLifeTimestamp_desc' | 'seen_asc' | 'seen_desc' | 'own_asc' | 'own_desc' | 'important_asc' | 'important_desc' | 'loading_asc' | 'loading_desc' | 'profileImage_asc' | 'profileImage_desc' | '_id_asc' | '_id_desc';
 
   
   export interface IMessage {
@@ -79,11 +61,42 @@ export
     _id: string | null;
 }
 
+  
+  export interface IAttachment {
+    __typename?: "Attachment";
+    source: string | null;
+    name: string | null;
+    downloadFileName: string | null;
+    mimeType: string | null;
+    thumbnail: string | null;
+    _id: string | null;
+}
+
 export   
   type IMessageEnumTypeEnum = 'CHAT_PRIVATE' | 'CHAT_PUBLIC' | 'USER_JOIN' | 'USER_LEAVE' | 'DEL_MESSAGE';
 
 export   
-  type IMessageOrderingEnum = 'messageId_asc' | 'messageId_desc' | 'content_asc' | 'content_desc' | 'senderName_asc' | 'senderName_desc' | 'date_asc' | 'date_desc' | 'channelId_asc' | 'channelId_desc' | 'messageType_asc' | 'messageType_desc' | 'timestamp_asc' | 'timestamp_desc' | 'endOfLifeTimestamp_asc' | 'endOfLifeTimestamp_desc' | 'seen_asc' | 'seen_desc' | 'own_asc' | 'own_desc' | 'important_asc' | 'important_desc' | 'loading_asc' | 'loading_desc' | 'profileImage_asc' | 'profileImage_desc' | '_id_asc' | '_id_desc';
+  type IAttachmentOrderingEnum = 'source_asc' | 'source_desc' | 'name_asc' | 'name_desc' | 'downloadFileName_asc' | 'downloadFileName_desc' | 'mimeType_asc' | 'mimeType_desc' | 'thumbnail_asc' | 'thumbnail_desc' | '_id_asc' | '_id_desc';
+
+export   
+  type IChannelTypeEnum = 'PRIVATE' | 'PUBLIC' | 'GROUP';
+
+export   
+  type IChannelOrderingEnum = 'channelType_asc' | 'channelType_desc' | '_id_asc' | '_id_desc';
+
+  
+  export interface IChannel {
+    __typename?: "Channel";
+    channelId: Array<string> | null;
+    channelName: Array<string> | null;
+    subscribers: Array<string> | null;
+    messages: Array<IMessage> | null;
+    channelType: IChannelTypeEnum | null;
+    _id: string | null;
+}
+
+export   
+  type IStatusQueryTypeOrderingEnum = 'status_asc' | 'status_desc' | '_id_asc' | '_id_desc';
 
 export   
   type IUserOrderingEnum = 'userName_asc' | 'userName_desc' | 'userId_asc' | 'userId_desc' | 'externalId_asc' | 'externalId_desc' | 'activeChannel_asc' | 'activeChannel_desc' | '_id_asc' | '_id_desc';
@@ -113,18 +126,27 @@ export
   
   export interface IMutation {
     __typename?: "Mutation";
+    CreateMessage: IMessage | null;
     CreateAttachment: IAttachment | null;
     UpdateAttachment: IAttachment | null;
     DeleteAttachment: IAttachment | null;
     CreateChannel: IChannel | null;
     UpdateChannel: IChannel | null;
     DeleteChannel: IChannel | null;
-    CreateMessage: IMessage | null;
     UpdateMessage: IMessage | null;
     DeleteMessage: IMessage | null;
+    CreateStatusQueryType: IStatusQueryType | null;
+    DeleteStatusQueryType: IStatusQueryType | null;
     CreateUser: IUser | null;
     UpdateUser: IUser | null;
     DeleteUser: IUser | null;
+}
+
+  
+  export interface ISubscription {
+    __typename?: "Subscription";
+    subscribeToUserMessagesBasic: IMessage | null;
+    subscribeToUserMessagesWithFilter: IMessage | null;
 }
 
   
@@ -265,6 +287,11 @@ export
   
   export interface IMessageInput {
     messageId: string;
+}
+
+  
+  export interface IStatusQueryTypeInput {
+    status: string;
 }
 
   

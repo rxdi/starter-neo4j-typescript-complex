@@ -5,7 +5,7 @@
 #### To start developing clone repository
 
 ```bash
-git clone https://github.com/Stradivario/gapi-starter-neo4j
+git clone https://github.com/rxdi/starter-neo4j
 ```
 
 #### Install @gapi command line interface and typescript node
@@ -13,159 +13,319 @@ git clone https://github.com/Stradivario/gapi-starter-neo4j
 npm i -g @gapi/cli ts-node
 ```
 
+#### Install project dependencies
+```bash
+cd starter-neo4j && npm install
+```
+
 #### Download Neo4J database https://neo4j.com/download/
 
-Follow the steps and create your Graph using interface provided and set password to it
+> Follow the steps and create your Graph using interface provided and set password to it
 
-default username for neo4j is `neo4j`
+> default `graphName` for neo4j is `neo4j`
 
-- Go to `src/app/app.module.ts` and find this line:
-- Here we attach neo4j driver to context of our resolvers and passing basic authentication before the actual GraphQL request is born
-- change `your-pass` with appropriate password
+> Go to `src/app/app.module.ts` and setup `password` field
 
 ```typescript
-        {
-            provide: ON_REQUEST_HANDLER,
-            useFactory: () => async (next, context, request: Request, h: ResponseToolkit, err: Error) => {
-                context.driver = (neo4j.driver(
-                    'bolt://localhost:7687',
-                    neo4j.auth.basic('neo4j', 'your-pass')
-                ))
-                return next;
-            }
-        }
-```
-#### The same `context` object can be accessed also when initializing @rxdi/graphql module inside `framework-imports.ts` 
-That way we will make single initializing onto neo4j driver instead of assigning it to the object on every request
-
-```typescript
-import { GraphQLModule } from "@rxdi/graphql";
-import { Module } from "@rxdi/core";
-import { HapiModule } from "@rxdi/hapi";
-import { GraphQLModule } from "@rxdi/graphql";
-import { v1 as neo4j } from 'neo4j-driver';
+import { Module, CoreModule } from '@gapi/core';
+import { VoyagerModule } from '@gapi/voyager';
+import { Neo4JModule } from '@rxdi/neo4j';
 
 @Module({
-    imports: [
-        HapiModule.forRoot({
-            hapi: {
-                port: 9000
-            }
-        }),
-        GraphQLModule.forRoot({
-            graphqlOptions: {
-                context: {
-                    driver: (neo4j.driver(
-                        'bolt://localhost:7687',
-                        neo4j.auth.basic('neo4j', 'your-graph-password')
-                    ))
-                },
-                schema: null
-            }
-        }),
-    ]
+  imports: [
+    CoreModule.forRoot(),
+    Neo4JModule.forRoot({
+      types: [],
+      graphName: 'neo4j',
+      graphAddress: 'bolt://localhost:7687',
+      password: 'your-password',
+      excludedTypes: {
+        mutation: {
+          exclude: []
+        },
+        query: {
+          exclude: []
+        }
+      }
+    }),
+    VoyagerModule.forRoot()
+  ]
 })
-export class CoreModule {}
+export class AppModule {}
+
+```
+
+#####  Simple GraphqlObject `UserType`
+```typescript
+import { GraphQLObjectType, GraphQLString } from 'graphql';
+
+export const UserType = new GraphQLObjectType({
+  name: 'User',
+  fields: () => ({
+    userName: {
+      type: GraphQLString
+    },
+  })
+});
+
 ```
 
 
-#### Start the application
-```bash
-gapi start
+##### Import inside AppModule or CoreModule
+```typescript
+import { Module, CoreModule } from "@gapi/core";
+import { UserContext } from "./types/user/user-context.type";
+import { User } from "./types/user/user.type";
+import { Message } from "./types/message/message.type";
+import { Channel } from "./types/channel/channel.type";
+import { AttachmentType } from "./types/attachment/attachment.type";
+import { VoyagerModule } from "@gapi/voyager";
+import { Neo4JModule } from "@rxdi/neo4j";
+import { ToUpperCaseDirective } from "./core/directives/toUppercase.directive";
+
+// import { AppQueriesController } from "./app.controller";
+// Uncomment to override some methods which are provided from neo4js
+
+@Module({
+  // controllers: [AppQueriesController],
+  imports: [
+    CoreModule.forRoot({
+      graphql: { directives: [ToUpperCaseDirective] }
+    }),
+    Neo4JModule.forRoot({
+      types: [UserContext, User, Message, Channel, AttachmentType],
+      graphName: "neo4j",
+      graphAddress: "bolt://localhost:7687",
+      password: "your-password",
+      excludedTypes: {
+        mutation: {
+          exclude: [UserContext]
+        }
+      }
+    }),
+    VoyagerModule.forRoot({
+      endpointUrl: "/graphql",
+      path: "/voyager"
+    })
+  ]
+})
+export class AppModule {}
+
 ```
 
-You are ready to write queries :)
 
-Open browser to
+##### Graphql Directive
 
-http://0.0.0.0:9000/graphiql?operationName=AppType&query=query%20AppType%20%7B%0A%20%20AppType(first%3A%2010)%20%7B%0A%20%20%20%20id%0A%20%20%20%20email%0A%20%20%20%20name%0A%20%20%20%20_id%0A%20%20%7D%0A%7D%0A%0Amutation%20CreateAppType%7B%0A%20%20CreateAppType(id%3A1%2C%20email%3A%22test%22%2C%20name%3A%22pesho%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20email%0A%20%20%20%20name%0A%20%20%20%20_id%0A%20%20%7D%0A%7D%0A%0Amutation%20UpdateAppType%20%7B%0A%20%20UpdateAppType(id%3A%201%2C%20email%3A%22%22%2C%20name%3A%22%22)%20%7B%0A%20%20%20%20id%0A%20%20%20%20email%0A%20%20%20%20name%0A%20%20%20%20_id%0A%20%20%7D%0A%7D%0A%0Amutation%20DeleteAppType%20%7B%0A%20%20DeleteAppType(id%3A%202)%20%7B%0A%20%20%20%20id%0A%20%20%20%20email%0A%20%20%20%20name%0A%20%20%20%20_id%0A%20%20%7D%0A%7D
+```typescript
+import { GraphQLCustomDirective } from '@gapi/core';
+import { DirectiveLocation } from 'graphql';
+
+export const ToUpperCaseDirective = new GraphQLCustomDirective<string>({
+  name: 'toUpperCase',
+  description: 'change the case of a string to uppercase',
+  locations: [DirectiveLocation.FIELD],
+  resolve: async resolve => (await resolve()).toUpperCase()
+});
+```
 
 
+##### Interceptor
+```typescript
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { Service } from '@rxdi/core';
+import { InterceptResolver, GenericGapiResolversType } from '@gapi/core';
+import { GraphQLContext } from '../../app.context';
+
+@Service()
+export class LoggerInterceptor implements InterceptResolver {
+  intercept(
+    chainable$: Observable<any>,
+    context: GraphQLContext,
+    payload,
+    descriptor: GenericGapiResolversType
+  ) {
+    console.log('Before...');
+    const now = Date.now();
+    return chainable$.pipe(
+      tap(() => console.log(`After... ${Date.now() - now}ms`))
+    );
+  }
+}
+```
+
+
+##### Guard
+```typescript
+import { Service } from '@rxdi/core';
+import { CanActivateResolver, GenericGapiResolversType } from '@gapi/core';
+import { GraphQLContext } from '../../app.context';
+
+@Service()
+export class AdminOnly implements CanActivateResolver {
+  canActivate(
+    context: GraphQLContext,
+    payload,
+    descriptor: GenericGapiResolversType
+  ) {
+    return false;
+  }
+}
+```
+
+
+##### Controller
+> The name of our class methods is important since we want to override default `neo4j-graphql` autogenerated types
+```typescript
+
+import { Controller, Type, Mutation, GraphQLString, Query, Interceptor, Guard } from '@gapi/core';
+import { Message } from './types/message/message.type';
+import { GraphQLContext } from './app.context';
+import { GraphQLList } from 'graphql';
+import { graphRequest } from '@rxdi/neo4j';
+import { IMessage } from './core/api-introspection';
+import { LoggerInterceptor } from './core/interceptors/logger.interceptor';
+import { AdminOnly } from './core/guards/admin-only.guard';
+
+@Controller()
+export class AppQueriesController {
+
+  @Interceptor(LoggerInterceptor)
+  @Type(Message)
+  @Guard(AdminOnly)
+  @Mutation({
+    messageId: {
+      type: GraphQLString
+    },
+    channelId: {
+      type: GraphQLString
+    }
+  })
+  CreateMessage(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage> {
+    return graphRequest<IMessage>(root, params, ctx, resolveInfo);
+  }
+
+  @Type(new GraphQLList(Message))
+  @Query({
+    messageId: {
+      type: GraphQLString
+    },
+    channelId: {
+      type: GraphQLString
+    }
+  })
+  Messages(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage[]> {
+    return graphRequest<IMessage[]>(root, params, ctx, resolveInfo);
+  }
+
+  @Type(Message)
+  @Query({
+    messageId: {
+      type: GraphQLString
+    },
+    channelId: {
+      type: GraphQLString
+    }
+  })
+  Message(root, params, ctx: GraphQLContext, resolveInfo): Promise<IMessage> {
+    return graphRequest<IMessage>(root, params, ctx, resolveInfo);
+  }
+
+
+  @Type(Message)
+  @Subscribe((self: AppQueriesController) => self.pubsub.asyncIterator('CREATE_SIGNAL_BASIC'))
+  @Subscription()
+  subscribeToUserMessagesBasic(message: IMessage): IMessage {
+      return message;
+  }
+
+
+  @Type(Message)
+  @Subscribe(
+      withFilter(
+          (self: AppQueriesController) => self.pubsub.asyncIterator('CREATE_MESSAGE_WITH_FILTER'),
+          (payload, {id}, context) => {
+              console.log('Subscribed User: ', id, context);
+              return true;
+          }
+      )
+  )
+  @Subscription({
+      id: {
+          type: new GraphQLNonNull(GraphQLInt)
+      }
+  })
+  subscribeToUserMessagesWithFilter(message: IMessage): IMessage {
+      return message;
+  }
+
+}
+
+```
+
+##### Effects
+
+
+```typescript
+import { Effect, OfType, PubSubService } from "@gapi/core";
+import { EffectTypes } from "../api-introspection/EffectTypes";
+import { GraphQLContext } from "../../app.context";
+import { IMessage } from "../api-introspection";
+
+@Effect()
+export class MessagesEffect {
+  constructor(
+      private pubsub: PubSubService
+  ) {}
+
+  @OfType(EffectTypes.CreateMessage)
+  createMessageEffect(result: IMessage, args, context: GraphQLContext) {
+    this.pubsub.publish('CREATE_MESSAGE', result);
+    // this will be triggered when CreateMessage effect is executed
+    console.log(result, args, context);
+  }
+}
+```
+
+> Important! The effect needs to be imported inside module to work
+
+```typescript
+import { Module } from "@gapi/core";
+import { AppQueriesController } from "./app.controller";
+import { MessagesEffect } from "./core/effects/messages.effect";
+
+@Module({
+  controllers: [AppQueriesController],
+  effects: [MessagesEffect]
+})
+export class AppModule {}
+```
+
+##### Context interface
+
+```typescript
+import { Driver } from '@rxdi/neo4j';
+
+export interface GraphQLContext {
+  driver: Driver;
+}
+```
+
+##### Example query
+> Note: `offset`, `first`, `orderBy` are autogenerated for convenience
 
 ```graphql
-query AppType {
-  AppType(first: 10) {
-    id
-    email
-    name
-    _id
-  }
-}
-
-mutation CreateAppType{
-  CreateAppType(id:1, email:"test", name:"pesho") {
-    id
-    email
-    name
-    _id
-  }
-}
-
-mutation UpdateAppType {
-  UpdateAppType(id: 1, email:"", name:"") {
-    id
-    email
-    name
-    _id
-  }
-}
-
-mutation DeleteAppType {
-  DeleteAppType(id: 2) {
-    id
-    email
-    name
-    _id
+query {
+  User(userName: "your-name", first: 10, offset: 10, orderBy: userName_asc) {
+    userName
   }
 }
 ```
 
+> Types can be found inside `./src/app/types`
 
-#### Explanation
 
-##### Neo4J Driver load
-```typescript
-import { Module, ON_REQUEST_HANDLER, SCHEMA_OVERRIDE, printSchema, GraphQLSchema  } from "@gapi/core";
-import { AppQueriesController } from "./app.controller";
-import { Request, ResponseToolkit } from 'hapi';
-import * as neo4jgql from 'neo4j-graphql-js';
-import { v1 as neo4j } from 'neo4j-driver';
+TODO: Better documentation...
 
-@Module({
-    controllers: [AppQueriesController],
-    providers: [
-        {
-            provide: SCHEMA_OVERRIDE,
-            useFactory: () => (schema: GraphQLSchema) => {
-                // Do things with bootstrapped schema
-                // For example now we augment schema so we can have neo4j-graphql CRUD operations based on Type
-                return neo4jgql.makeAugmentedSchema({ typeDefs: printSchema(schema) });
-            }
-        },
-        {
-            provide: ON_REQUEST_HANDLER,
-            useFactory: () => async (next, context, request: Request, h: ResponseToolkit, err: Error) => {
-                // Authenticate user here if it is not authenticated return Boom.unauthorized()
-                // if (request.headers.authorization) {
-                //     const tokenData = ValidateToken(request.headers.authorization);
-                //     const user = {};
-                //     if (!user) {
-                //         return Boom.unauthorized();
-                //     } else {
-                //         context.user = {id: 1, name: 'pesho'};
-                //     }
-                // }
-                // context.user - modifying here context will be passed to the resolver
-                // Passing Neo4J driver for every resolver context
-                context.driver = (neo4j.driver(
-                    'bolt://localhost:7687',
-                    neo4j.auth.basic('neo4j', 'your-pass')
-                ))
-                return next();
-            }
-        }
-    ]
-})
-export class AppModule { }
-```
+Enjoy ! :)
 
