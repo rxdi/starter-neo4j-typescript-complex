@@ -1,68 +1,32 @@
-import {
-  Module,
-  ON_REQUEST_HANDLER,
-  SCHEMA_OVERRIDE,
-  printSchema,
-  GraphQLSchema
-} from "@gapi/core";
-import { AppQueriesController } from "./app.controller";
-import { Request, ResponseToolkit } from "hapi";
-import * as neo4jgql from "neo4j-graphql-js";
-import { v1 as neo4j } from "neo4j-driver";
+import { Module } from "@gapi/core";
 import { VoyagerModule } from "@gapi/voyager";
 import { UserContext } from "./types/user/user-context.type";
+import { Neo4JModule } from "./core/neo4j";
+import { User } from "./types/user/user.type";
+import { Message } from "./types/message/message.type";
+import { Channel } from "./types/channel/channel.type";
+import { AttachmentType } from "./types/attachment/attachment.type";
+import { AppQueriesController } from "./app.controller";
+// Uncomment to override some methods which are provided from neo4js
 
 @Module({
   controllers: [AppQueriesController],
   imports: [
+    Neo4JModule.forRoot({
+      types: [UserContext, User, Message, Channel, AttachmentType],
+      graphName: "neo4j",
+      graphAddress: "bolt://localhost:7687",
+      password: "98412218",
+      excludedTypes: {
+        mutation: {
+          exclude: [UserContext.name]
+        }
+      }
+    }),
     VoyagerModule.forRoot({
       endpointUrl: "/graphql",
       path: "/voyager"
     })
-  ],
-  providers: [
-    {
-      provide: SCHEMA_OVERRIDE,
-      useFactory: () => (schema: GraphQLSchema) => {
-        // Do things with bootstrapped schema
-        // For example now we augment schema so we can have neo4j-graphql CRUD operations based on Type
-        return neo4jgql.makeAugmentedSchema({
-          typeDefs: printSchema(schema),
-          config: {
-            mutation: {
-                exclude: [UserContext.name]
-            }
-          }
-        });
-      }
-    },
-    {
-      provide: ON_REQUEST_HANDLER,
-      useFactory: () => async (
-        next,
-        context,
-        request: Request,
-        h: ResponseToolkit,
-        err: Error
-      ) => {
-        // Authenticate user here if it is not authenticated return Boom.unauthorized()
-        // if (request.headers.authorization) {
-        //     const tokenData = ValidateToken(request.headers.authorization);
-        //     const user = {};
-        //     if (!user) {
-        //         return Boom.unauthorized();
-        //     } else {
-        //         context.user = {id: 1, name: 'pesho'};
-        //     }
-        // }
-        // context.user - modifying here context will be passed to the resolver
-        context.driver = neo4j.driver(
-          "bolt://localhost:7687",
-          neo4j.auth.basic("neo4j", "98412218")
-        );
-        return next();
-      }
-    }
   ]
 })
 export class AppModule {}

@@ -3,12 +3,12 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLBoolean
-} from 'graphql';
-import { AttachmentType } from '../attachment/attachment.type';
-import { MessageEnumType } from './message-enum.type';
+} from "graphql";
+import { AttachmentType } from "../attachment/attachment.type";
+import { MessageEnumType } from "./message-enum.type";
 
 export const Message = new GraphQLObjectType({
-  name: 'Message',
+  name: "Message",
   fields: () => ({
     messageId: {
       type: GraphQLString

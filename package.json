@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "gapi start --local --lint",
+    "start": "gapi start --local --lint --parcel",
     "test": "gapi test --local",
     "lint": "echo"
   },
