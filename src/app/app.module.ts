@@ -23,15 +23,15 @@ import { AppQueriesController } from "./app.controller";
     }),
     Neo4JModule.forRoot({
       types: [UserContext, User, Message, Channel, AttachmentType],
-      graphName: "neo4j",
-      graphAddress: "bolt://localhost:7687",
+      username: "neo4j",
       password: "98412218",
+      address: "bolt://localhost:7687",
       excludedTypes: {
         query: {
-          exclude: ['Subscription']
+          exclude: []
         },
         mutation: {
-          exclude: ['Subscription', UserContext.name]
+          exclude: [UserContext]
         }
       }
     }),

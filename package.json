@@ -13,9 +13,9 @@
   "author": "Kristiyan Tachev (Stradivario)",
   "license": "MIT",
   "dependencies": {
-    "@gapi/core": "^1.4.92",
-    "@gapi/voyager": "^1.4.92",
-    "@rxdi/neo4j": "^0.0.408"
+    "@gapi/core": "^1.5.7",
+    "@gapi/voyager": "^1.5.7",
+    "@rxdi/neo4j": "^0.2.1"
   },
   "nodemonConfig": {
     "ignore": [
